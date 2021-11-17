@@ -2,14 +2,19 @@ OAMK Tieto- ja viestintätekniikka.
 
 Tietotekniikan sovellusprojekti.
 
-Ohjaaja:
-Kari Jyrkkä		
+**Ohjaaja:**
 
-Jäsenet:
-Tomi Alatalo		@Toope121
-Matias Karjalainen	@matiasKoo
-Santeri Knihtilä	@MarsalkkaSandels
-Aappo Launonen		@Olvix
+  Kari Jyrkkä
+
+**Jäsenet:**
+
+  [Tomi Alatalo](https://github.com/Toope121)
+
+  [Matias Karjalainen](https://github.com/matiasKoo)
+
+  [Santeri Knihtilä](https://github.com/MarsalkkaSandels)
+
+  [Aappo Launonen](https://github.com/Olvix)
 
 Projektin tarkoituksena ryhmässä suunnitella ja luoda toimiva prototyyppi lelusta MagicEightBall (MATTEL 86618385), mutta elektroonisena.
 
