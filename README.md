@@ -4,7 +4,7 @@ LCD_print.ino on prototyyppi funktiosta, joka tulostaa 16x2 LCD-näytölle tekst
 
 ArduinonKoodi.ino on kopio main-branchin koodista, ja siitä löytyy koko projektin ohjelma niin pitkälle kuin sitä on tehty + minun tekemät muutokset.
 
-
+-----------------------------------------------------------------------------------------------------------------------------------------------------
 Ominaisuudet ja niiden työvaiheet:
 
 Tekstin tulostus. Prototyyppi valmis, tekstin katkaisu seuraava työvaihe.
