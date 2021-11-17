@@ -6,6 +6,7 @@ ArduinonKoodi.ino on kopio main-branchin koodista, ja siitä löytyy koko projek
 
 
 Ominaisuudet ja niiden työvaiheet:
+
 Tekstin tulostus. Prototyyppi valmis, tekstin katkaisu seuraava työvaihe.
 Animaatio laitetta ravistaessa. Tarvitsee suunnittelua.
 Asetusvalikko. Tarvitsee suunnittelua.
