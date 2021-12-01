@@ -1,8 +1,7 @@
-#include <LiquidCrystal.h>  // Ladataan tarvittu kirjasto
+#include "LiquidCrystal.h"
 
+LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
 
-LiquidCrystal lcd = LiquidCrystal(2,3,4,5,6,7);   // Luodaan näytölle objekti.
-// Tästä alkaa settings menuun sisältyvät tiedot
 #define button_T    A0
 #define button_A    A1
 #define button_Y    A2
@@ -17,11 +16,6 @@ LiquidCrystal lcd = LiquidCrystal(2,3,4,5,6,7);   // Luodaan näytölle objekti.
 
 #define DEFAULT_DELAY 300
 
-//Seuraavaksi alustetaan lista vastauksista TODO: funktio tekemään muutoksia serialin kautta.
-char *actors[] = {"Vastaukseni on ei", "Ala luota siihen", "Lähteeni sanoo ei", "Epäilen", "Lopputulema ei ole hyvä", "Parempi etten kerro nyt", "En voi ennustaa nyt", "Kysy uudestaan myöhemmin", "Epäselvä kysymys, kysy uudelleen", "Keskity ja kysy uudelleen", "Lopputulema on hyvä", "Todennäköisesti", "Merkit viittaavat että kyllä", "Miten näen asian, kyllä", "Kyllä", "Voit luottaa siihen",
- "Epäilemättä", "Kyllä, ehdottomasti", "Se on juurikin näin", "Se on varma"};
- 
-// nämä myös sisältyvät settingsMenu() toimintaan
 char nappiPaino = '0';
 
 byte menuTaso = 0;     //  Taso 1 näyttää kotinäytön
@@ -57,43 +51,28 @@ unsigned long waitTime_A = 50;
 unsigned long waitTime_Y = 50;
 unsigned long waitTime_E = 50;
 
+
 void setup() {
-  lcd.begin(16, 2); // määritetään näytön koko
-  Serial.begin(9600);   //Aappon rng
-  randomSeed(600);
-  pinMode(button_T, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
-  pinMode(button_A, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
-  pinMode(button_Y, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
-  pinMode(button_E, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
+  lcd.begin(16,2);
+
+  Serial.begin(9600);
+  
+  pinMode(button_T, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode()
+  pinMode(button_A, INPUT_PULLUP);
+  pinMode(button_Y, INPUT_PULLUP);
+  pinMode(button_E, INPUT_PULLUP);
 
   pinMode(A4,INPUT);
+
+  naytaKotinaytto();
 }
 
-int randomNumero() {   //funktio rng:lle
-  long actor1;
-  actor1 = random(sizeof(actors)/sizeof(char*)); //numero on välillä 0-[listan pituus]
-  return actor1;
+void loop() {
+
+  buttonCheck();  
 }
 
-void tulostusFunk(int a = 0) {     //funktio tulostukselle
-    lcd.print(actors[a]); // printataan ensimmäiselle riville
-    delay(2000);  //aika kauanko esitetään vastausta näytöllä
-    lcd.clear(); //näytön tyhjennys
-}
-
-bool sensoriTriggeri() { //TODO: funktio sensoridatan kuuntelemiselle
-//Tämä funktio vois pidattää loop() funktiota ja palauttaa bool arvoja kun sensorien threshold ylittyy jolloinka loop() funktio jatkuisi
-}
-
-void moottoriBrrr() { //TODO: funktio jolla voi päristää moottoria tietyissä tilanteissa
-  //Käytetään vaikka arduinon porttia 15
-}
-
-void kaijutinBrrr() { //TODO: Kaijutin piippaa erinäisiä ääni erinäisissä tilanteissa
-  //Käytetään vaikka arduinon porttia 14
-}
-
-void buttonCheck() { // navigointia varten tehty funktio
+void buttonCheck() {
 
   // Tässä niin sanotusti "debouncataan" painonapit, jotta varmistutaan että
   // että napin painallukset antavat luotettavia tuloksia
@@ -155,11 +134,11 @@ void buttonCheck() { // navigointia varten tehty funktio
   prevState_Y = currRead_Y;
   prevState_E = currRead_E;
 
-  settinsgMenu(nappiPaino);
+  processButton(nappiPaino);
 
 }
 
-void settingsMenu(char nappiPaino) { // asetusvalikon ohjelma
+void processButton(char nappiPaino) {
 
   switch(menuTaso) {    //käytetään switchcasea navigoinnissa
     case 0: // 
@@ -349,9 +328,4 @@ void naytaKotinaytto() { // Kotinäyttö näkymä
   lcd.println(" Taika 8-pallo  ");
   lcd.setCursor(0,1);
   lcd.println(" - Paina enter  ");
-}
-
-void loop() {   //perustoiminto loop
-  tulostusFunk(randomNumero()); //kutsutaan satunnaisella numerolla tulostus funktio
-  delay(1000); //Tämä delay on turha kunhan saadaan sensoridatan kuuntelulle funktio
 }
