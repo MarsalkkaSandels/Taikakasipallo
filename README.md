@@ -18,5 +18,5 @@ Tietotekniikan sovellusprojekti.
 
 Projektin tarkoituksena ryhmässä suunnitella ja luoda toimiva prototyyppi lelusta MagicEightBall (MATTEL 86618385), mutta elektroonisena.
 
-
+Tämä lisäys tehtiin vain git toiminnon debuggaamiseksi
 
