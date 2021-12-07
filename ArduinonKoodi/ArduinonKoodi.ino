@@ -1,19 +1,19 @@
-#include <NoiascaLiquidCrystal.h>      // download library from https://werner.rothschopf.net/202009_arduino_liquid_crystal_intro.htm 
-#include <NoiascaHW/lcd_4bit.h>        // parallel interface, 4bit
+#include <NoiascaLiquidCrystal.h>       
+#include <NoiascaHW/lcd_4bit.h>        
+#include <Regexp.h>                    //ladataan LCD:lle ja RegExpille kirjastot
 
-
-const byte cols = 16;                  // columns/characters per row
-const byte rows = 2;                   // how many rows
+// alustetaan lcd-näyttö
+const byte cols = 16;                  // merkkien määrä rivillä
+const byte rows = 2;                   // rivien määrä
 const byte rs = 2;
 const byte en = 3;
 const byte d4 = 4;
 const byte d5 = 5;
 const byte d6 = 6;
 const byte d7 = 7;
-const byte bl = 255;                    // set to 255 if not used
+const byte bl = 255;                    
 
-LiquidCrystal_4bit lcd(rs, en, d4, d5, d6, d7, bl, cols, rows);  // create lcd object
-//LiquidCrystal_4bit_base lcd(rs, en, d4, d5, d6, d7, bl, cols, rows);  // base class without UTF-8
+LiquidCrystal_4bit lcd(rs, en, d4, d5, d6, d7, bl, cols, rows);  // luodaan näytölle objekti
 
 // Tästä alkaa settings menuun sisältyvät tiedot
 #define button_T    A0
@@ -85,10 +85,13 @@ int ravistusLaskuri = 0;        //Laskurit ravistuksentunnistusta varten
 int nollausLaskuri = 0;
 const int analogInPin = A4;     //Kiihtyvyysanturin sarjakytkennän sisääntulo
 
+unsigned long regex;            //RegExpin muuttuja
+float muuttuja16;               //RegExpin pituuden laskuri
+
 void setup() {
-  lcd.begin(); // määritetään näytön koko
-  Serial.begin(9600);   //Aappon rng
-  randomSeed(600);
+  lcd.begin(); // käynnistetään näyttö
+  Serial.begin(9600);   
+  randomSeed(600);    //rng:n pohja
   pinMode(button_T, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
   pinMode(button_A, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
   pinMode(button_Y, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
@@ -107,10 +110,41 @@ int randomNumero() {   //funktio rng:lle
   return actor1;
 }
 
+// kutsutaan jokaisa sanaa kohti tulostusfunktiossa
+void match_callback  (const char * match,          // matching string (not null-terminated)
+                      const unsigned int length,   // length of matching string
+                      const MatchState & ms)      // MatchState in use (to get captures)
+{
+char cap [16];   // must be large enough to hold captures
+  
+    for (byte i = 0; i < ms.level; i++)
+    {
+   
+    ms.GetCapture (cap, i);                 //otetaan capturet jokaisesta halutusta merkistä.
+ 
+      if (muuttuja16 + length <= 16) {        //printataan ensimmäiselle riville
+        lcd.setCursor(0, 0);                  //varmistetaan, että näyttö tulostaa oikean kohtaan
+        muuttuja16 = muuttuja16 + length/3;   //laskuri rivinvaihtoa varten, koodi pyörähtää kerran jokaista regexin syntaksin vaihetta kohden, eli kolmesti meidän tapauksessa. Tämän takia vain kolmasosa matchin pituudesta lisätään laskuriin kierroksessa               
+        lcd.print(cap);                       //tulostetaan näytölle
+
+      }
+      else if (muuttuja16 + length >= 16) {   //jos vastaus ei mahdu ensimmäiselle riville, katkaistaan se välilyönnissä
+        lcd.setCursor(1, 0);                  //asetetaan näytön kursori toiselle riville
+        muuttuja16 = muuttuja16 + length/3;
+        lcd.print(cap);                       //tulostetaan näytölle
+
+      }
+      
+    }  // capturen ja printtauksen loppu
+
+}  // match_callbackin loppu
+
 void tulostusFunk(int a = 0) {     //funktio tulostukselle
-    lcd.print(actors[a]); // printataan ensimmäiselle riville
-    delay(2000);  //aika kauanko esitetään vastausta näytöllä
-    lcd.clear(); //näytön tyhjennys
+    muuttuja16 = 0;                 //nollataan laskuri
+    lcd.clear                       //tyhjennetään näyttö
+    MatchState ms (actors[a]);      //alustetaan RegExpille kohde
+    regex = ms.GlobalMatch ("(%a+)(%p?)( ?)", match_callback);
+    
 }
 
 void ravistus(){

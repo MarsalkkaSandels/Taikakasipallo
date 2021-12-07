@@ -18,20 +18,18 @@ char cap [16];   // must be large enough to hold captures
     {
    
     ms.GetCapture (cap, i);
-    // Serial.println (cap); 
+ 
       if (muuttuja16 + length <= 16) {
         muuttuja16 = muuttuja16 + length/3;
-      //  Serial.println(muuttuja16);
         Serial.println(cap);
-     /*   Serial.print("Rivi 1");
-        Serial.println(); */
+     //   Serial.print("Rivi 1");
+
       }
       else if (muuttuja16 + length >= 16) {
         muuttuja16 = muuttuja16 + length/3;
-      //  Serial.println(muuttuja16);
         Serial.println(cap);
-        Serial.print("Rivi 2");
-      //  Serial.println();
+      //  Serial.print("Rivi 2");
+
       }
       
     }  // end of for each capture
@@ -59,7 +57,7 @@ void setup ()
 
   // show results
   Serial.print ("Found ");
-  Serial.print (count);            // 8 in this case
+  Serial.print (count);            
   Serial.println (" matches.");
  
 
