@@ -74,18 +74,21 @@ const int analogInPin = A4;     //Kiihtyvyysanturin sarjakytkennän sisääntulo
 
 void setup() {
   lcd.begin(16, 2); // määritetään näytön koko
-  Serial.begin(9600);   //Aappon rng
-  randomSeed(600);
+  Serial.begin(9600);   //TODO: onko tälle tarvetta enään
+  randomSeed(600); //TODO: tähän analogi pinni jos vapaana
   pinMode(button_T, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
   pinMode(button_A, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
   pinMode(button_Y, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
   pinMode(button_E, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
-
   pinMode(A4,INPUT);
- 
   pinMode(latchPin, OUTPUT); //Ledien  animaatioon käytettävät pinnit outputeiksi
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
+
+  //Testiajot funktiolle
+  melodia(10, 1); //pyritään tässä kutsumaan default
+  lediAnimaatio();
+  //TODO: näytölle testifunk
 }
 
 int randomNumero() {   //funktio rng:lle
@@ -139,8 +142,70 @@ void moottoriBrrr() { //TODO: funktio jolla voi päristää moottoria tietyissä
   //Käytetään vaikka arduinon porttia 15
 }
 
-void kaijutinBrrr() { //TODO: Kaijutin piippaa erinäisiä ääni erinäisissä tilanteissa
-  //Käytetään vaikka arduinon porttia 14
+void melodia(int a = 0, int b = 1) { //Tässä a on melodia mitä halutaan soittaa ja b on toistojen määrä
+  switch(a){ // 0 caseksi lyhyt piippaus, pitemmät melodiat valintojen taakse
+    case 0: //2400 = tahti
+      for(int n = 0; n < b; n++) {    
+      tone(9, 293, 200); //d
+      delay(400);
+      tone(9, 440, 200); //a
+      delay(400);
+      tone(9, 329, 200); //e
+      delay(400);
+      tone(9, 440, 200); //a
+      delay(400);
+      //Tämä kommentti on tahtiviiva
+      tone(9, 349, 600); //f
+      tone(9, 392, 200); //g
+      delay(100);
+      tone(9, 440, 200); //a
+      delay(100);
+      tone(9, 349, 200); //f
+      delay(400);
+      tone(9, 493, 200); //b
+      delay(400);
+      //Tämä kommentti on tahtiviiva
+      tone(9, 293, 200); //d
+      delay(200);
+      tone(9, 440, 200); //a
+      delay(200);
+      tone(9, 329, 200); //e
+      delay(200);
+      tone(9, 440, 200); //f
+      delay(200);
+      tone(9, 293, 200); //e
+      delay(200);
+      tone(9, 440, 200); //f
+      tone(9, 329, 200); //e
+      tone(9, 440, 200); //d
+      delay(200);
+      tone(9, 440, 200); //c
+      delay(200);
+      //Tämä kommentti on tahtiviiva
+      tone(9, 440, 200); //a
+      delay(200);
+      tone(9, 261, 200); //c
+      delay(200);
+      tone(9, 392, 200); //g
+      delay(200);
+      tone(9, 440, 200); //a
+      delay(200);
+      tone(9, 349, 600); //f
+      }
+    break;
+
+    case 1: 
+    //melodia
+    break;
+
+    case 2:
+    //melodia
+    break; 
+
+    default:  //virheen kuuloinen piippaus esim terssi alas g-d#
+    tone(9, 196, 100); //g
+    tone(9, 155, 200); //d#
+  }
 }
 
 void buttonCheck() { // navigointia varten tehty funktio
@@ -516,6 +581,8 @@ void lediAnimaatio() {
 
 
 void loop() {   //perustoiminto loop
+  //tästä otettu pois asetusmenun käyttö vielä toistaiseksi
   tulostusFunk(randomNumero()); //kutsutaan satunnaisella numerolla tulostus funktio
+  melodia(0, 2); //Testimielessä rallattelut
   delay(1000); //Tämä delay on turha kunhan saadaan sensoridatan kuuntelulle funktio
 }
