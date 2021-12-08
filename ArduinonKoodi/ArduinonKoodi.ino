@@ -110,7 +110,7 @@ int randomNumero() {   //funktio rng:lle
   return actor1;
 }
 
-// kutsutaan jokaisa sanaa kohti tulostusfunktiossa
+// Kutsutaan jokaisa sanaa kohti tulostusfunktiossa. Tämä funktio pohjautuu Nick Gammonin esimerkkikoodiin hänen regex-kirjastonsa dokumentaatiosta.
 void match_callback  (const char * match,          // matching string (not null-terminated)
                       const unsigned int length,   // length of matching string
                       const MatchState & ms)      // MatchState in use (to get captures)
@@ -143,7 +143,7 @@ void tulostusFunk(int a = 0) {     //funktio tulostukselle
     muuttuja16 = 0;                 //nollataan laskuri
     lcd.clear                       //tyhjennetään näyttö
     MatchState ms (actors[a]);      //alustetaan RegExpille kohde
-    regex = ms.GlobalMatch ("(%a+)(%p?)( ?)", match_callback);
+    regex = ms.GlobalMatch ("(%a+)(%p?)( ?)", match_callback);  //Regex-kirjasto ja linkkejä esimekkeihin, match_callbackin pohjana esimerkki "Iterating over a string". https://github.com/nickgammon/Regexp ja http://www.gammon.com.au/forum/?id=11063
     
 }
 
