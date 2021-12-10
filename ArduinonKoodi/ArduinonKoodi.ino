@@ -1,7 +1,20 @@
-#include <LiquidCrystal.h>  // Ladataan tarvittu kirjasto
+#include <NoiascaLiquidCrystal.h>       
+#include <NoiascaHW/lcd_4bit.h>        
+#include <Regexp.h>                    //ladataan LCD:lle ja RegExpille kirjastot
 
+// alustetaan lcd-näyttö
+const byte cols = 16;                  // merkkien määrä rivillä
+const byte rows = 2;                   // rivien määrä
+const byte rs = 2;
+const byte en = 3;
+const byte d4 = 4;
+const byte d5 = 5;
+const byte d6 = 6;
+const byte d7 = 7;
+const byte bl = 255;                    
 
-LiquidCrystal lcd = LiquidCrystal(2,3,4,5,6,7);   // Luodaan näytölle objekti.
+LiquidCrystal_4bit lcd(rs, en, d4, d5, d6, d7, bl, cols, rows);  // luodaan näytölle objekti
+
 // Tästä alkaa settings menuun sisältyvät tiedot
 #define button_T    A0
 #define button_A    A1
@@ -42,7 +55,7 @@ bool currState_Y = HIGH;
 bool currState_E = HIGH;
           
 bool prevState_T = HIGH; 
-bool prevState_A = HIGH; 
+bool prevState_A = HIGH;
 bool prevState_Y = HIGH; 
 bool prevState_E = HIGH; 
 // seuraavat muuttujat ovat unsigned longeja koska aika jota mitataan
@@ -65,30 +78,30 @@ const int dataPin = 12;
 //Animaatiossa käytettävä taulukko
 int datArray[8];  //Todnäk ei tarvitse olla globaali, mutta jostain syystä ei toiminut testatessa kuin globaalina
 
-bool ravistusLippu = TRUE;      //Lippu ravistusfunktion toiminnalle
+bool ravistusLippu = true;      //Lippu ravistusfunktion toiminnalle
 int sensorValue = 0;            //Muuttuja johon luku kiihtyvyysanturilta
 unsigned long aika = millis();  //Muuttuja jossa aika millisekunteina
 int ravistusLaskuri = 0;        //Laskurit ravistuksentunnistusta varten
 int nollausLaskuri = 0;
 const int analogInPin = A4;     //Kiihtyvyysanturin sarjakytkennän sisääntulo
 
+unsigned long regex;            //RegExpin muuttuja
+float muuttuja16;               //RegExpin pituuden laskuri
+
 void setup() {
-  lcd.begin(16, 2); // määritetään näytön koko
-  Serial.begin(9600);   //TODO: onko tälle tarvetta enään
-  randomSeed(600); //TODO: tähän analogi pinni jos vapaana
+  lcd.begin(); // käynnistetään näyttö
+  Serial.begin(9600);   
+  randomSeed(600);    //rng:n pohja
   pinMode(button_T, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
   pinMode(button_A, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
   pinMode(button_Y, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
   pinMode(button_E, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
+
   pinMode(A4,INPUT);
+ 
   pinMode(latchPin, OUTPUT); //Ledien  animaatioon käytettävät pinnit outputeiksi
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
-
-  //Testiajot funktiolle
-  melodia(10, 1); //pyritään tässä kutsumaan default
-  lediAnimaatio();
-  //TODO: näytölle testifunk
 }
 
 int randomNumero() {   //funktio rng:lle
@@ -97,10 +110,41 @@ int randomNumero() {   //funktio rng:lle
   return actor1;
 }
 
+// kutsutaan jokaisa sanaa kohti tulostusfunktiossa
+void match_callback  (const char * match,          // matching string (not null-terminated)
+                      const unsigned int length,   // length of matching string
+                      const MatchState & ms)      // MatchState in use (to get captures)
+{
+char cap [16];   // must be large enough to hold captures
+  
+    for (byte i = 0; i < ms.level; i++)
+    {
+   
+    ms.GetCapture (cap, i);                 //otetaan capturet jokaisesta halutusta merkistä.
+ 
+      if (muuttuja16 + length <= 16) {        //printataan ensimmäiselle riville
+        lcd.setCursor(0, 0);                  //varmistetaan, että näyttö tulostaa oikean kohtaan
+        muuttuja16 = muuttuja16 + length/3;   //laskuri rivinvaihtoa varten, koodi pyörähtää kerran jokaista regexin syntaksin vaihetta kohden, eli kolmesti meidän tapauksessa. Tämän takia vain kolmasosa matchin pituudesta lisätään laskuriin kierroksessa               
+        lcd.print(cap);                       //tulostetaan näytölle
+
+      }
+      else if (muuttuja16 + length >= 16) {   //jos vastaus ei mahdu ensimmäiselle riville, katkaistaan se välilyönnissä
+        lcd.setCursor(1, 0);                  //asetetaan näytön kursori toiselle riville
+        muuttuja16 = muuttuja16 + length/3;
+        lcd.print(cap);                       //tulostetaan näytölle
+
+      }
+      
+    }  // capturen ja printtauksen loppu
+
+}  // match_callbackin loppu
+
 void tulostusFunk(int a = 0) {     //funktio tulostukselle
-    lcd.print(actors[a]); // printataan ensimmäiselle riville
-    delay(2000);  //aika kauanko esitetään vastausta näytöllä
-    lcd.clear(); //näytön tyhjennys
+    muuttuja16 = 0;                 //nollataan laskuri
+    lcd.clear                       //tyhjennetään näyttö
+    MatchState ms (actors[a]);      //alustetaan RegExpille kohde
+    regex = ms.GlobalMatch ("(%a+)(%p?)( ?)", match_callback);
+    
 }
 
 void ravistus(){
@@ -123,13 +167,13 @@ void ravistus(){
   }
 
   if(nollausLaskuri>=6){          //Tätä vertailua muuttamalla herkkyyden muutos
-    ravistusLippu = TRUE;         
+    ravistusLippu = true;         
     ravistusLaskuri=0;
     nollausLaskuri=0;
   }
   
   if (ravistusLaskuri >= 11) {    //Tietyn määrän jälkeen led päälle ja if 0 looppiin
-    ravistusLippu = FALSE;        //vertailtavaa lukua muuttamalla herkkyyden säätö
+    ravistusLippu = false;        //vertailtavaa lukua muuttamalla herkkyyden säätö
     ravistusLaskuri = 0;          //Tähän tietenkin sisälle koodi joka signaloi
   }
  
@@ -142,70 +186,8 @@ void moottoriBrrr() { //TODO: funktio jolla voi päristää moottoria tietyissä
   //Käytetään vaikka arduinon porttia 15
 }
 
-void melodia(int a = 0, int b = 1) { //Tässä a on melodia mitä halutaan soittaa ja b on toistojen määrä
-  switch(a){ // 0 caseksi lyhyt piippaus, pitemmät melodiat valintojen taakse
-    case 0: //2400 = tahti
-      for(int n = 0; n < b; n++) {    
-      tone(9, 293, 200); //d
-      delay(400);
-      tone(9, 440, 200); //a
-      delay(400);
-      tone(9, 329, 200); //e
-      delay(400);
-      tone(9, 440, 200); //a
-      delay(400);
-      //Tämä kommentti on tahtiviiva
-      tone(9, 349, 600); //f
-      tone(9, 392, 200); //g
-      delay(100);
-      tone(9, 440, 200); //a
-      delay(100);
-      tone(9, 349, 200); //f
-      delay(400);
-      tone(9, 493, 200); //b
-      delay(400);
-      //Tämä kommentti on tahtiviiva
-      tone(9, 293, 200); //d
-      delay(200);
-      tone(9, 440, 200); //a
-      delay(200);
-      tone(9, 329, 200); //e
-      delay(200);
-      tone(9, 440, 200); //f
-      delay(200);
-      tone(9, 293, 200); //e
-      delay(200);
-      tone(9, 440, 200); //f
-      tone(9, 329, 200); //e
-      tone(9, 440, 200); //d
-      delay(200);
-      tone(9, 440, 200); //c
-      delay(200);
-      //Tämä kommentti on tahtiviiva
-      tone(9, 440, 200); //a
-      delay(200);
-      tone(9, 261, 200); //c
-      delay(200);
-      tone(9, 392, 200); //g
-      delay(200);
-      tone(9, 440, 200); //a
-      delay(200);
-      tone(9, 349, 600); //f
-      }
-    break;
-
-    case 1: 
-    //melodia
-    break;
-
-    case 2:
-    //melodia
-    break; 
-
-    default:  //virheen kuuloinen piippaus esim terssi alas g-d#
-    tone(9, 196, 100); //g
-    tone(9, 155, 200); //d#
-  }
+void kaijutinBrrr() { //TODO: Kaijutin piippaa erinäisiä ääni erinäisissä tilanteissa
+  //Käytetään vaikka arduinon porttia 14
 }
 
 void buttonCheck() { // navigointia varten tehty funktio
@@ -270,7 +252,7 @@ void buttonCheck() { // navigointia varten tehty funktio
   prevState_Y = currRead_Y;
   prevState_E = currRead_E;
 
-  settinsgMenu(nappiPaino);
+  settingsMenu(nappiPaino);
 
 }
 
@@ -575,14 +557,15 @@ void lediAnimaatio() {
       
       //latch "auki"
       digitalWrite(latchPin, HIGH);
+      delay(100);
     }
   }  
 }
 
 
 void loop() {   //perustoiminto loop
-  //tästä otettu pois asetusmenun käyttö vielä toistaiseksi
-  tulostusFunk(randomNumero()); //kutsutaan satunnaisella numerolla tulostus funktio
-  melodia(0, 2); //Testimielessä rallattelut
-  delay(1000); //Tämä delay on turha kunhan saadaan sensoridatan kuuntelulle funktio
+ // tulostusFunk(randomNumero()); //kutsutaan satunnaisella numerolla tulostus funktio
+ //ravistus();
+ lediAnimaatio();
+  //delay(1000); //Tämä delay on turha kunhan saadaan sensoridatan kuuntelulle funktio
 }
