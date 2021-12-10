@@ -63,7 +63,7 @@ const int clockPin = 11;
 const int dataPin = 12;
 
 //Animaatiossa käytettävä taulukko
-int datArray[8];  //Todnäk ei tarvitse olla globaali, mutta jostain syystä ei toiminut testatessa kuin globaalina
+int datArray[2];  //Todnäk ei tarvitse olla globaali, mutta jostain syystä ei toiminut testatessa kuin globaalina
 
 bool ravistusLippu = TRUE;      //Lippu ravistusfunktion toiminnalle
 int sensorValue = 0;            //Muuttuja johon luku kiihtyvyysanturilta
@@ -71,6 +71,7 @@ unsigned long aika = millis();  //Muuttuja jossa aika millisekunteina
 int ravistusLaskuri = 0;        //Laskurit ravistuksentunnistusta varten
 int nollausLaskuri = 0;
 const int analogInPin = A4;     //Kiihtyvyysanturin sarjakytkennän sisääntulo
+int animaatioLippu = 0;         //lcd-animaation lippu, mahollistaa animoinnin esim loopin sykleissä
 
 void setup() {
   lcd.begin(16, 2); // määritetään näytön koko
@@ -467,116 +468,46 @@ void naytaKotinaytto() { // Kotinäyttö näkymä
 }
 
 void lediAnimaatio() {
-  //perustuu https://dronebotworkshop.com/shift-registers/ löytyvään koodiin
-  //kohdasta "74HC595 and 74HC165 Sketch 2 – Exciting!"
+ //perustuu https://dronebotworkshop.com/shift-registers/ löytyvään koodiin
+ //kohdasta "74HC595 and 74HC165 Sketch 2 – Exciting!"
+
+ datArray[0] = B10101010;
+ datArray[1] = B01010101;
+        
+ //Ledien väläyttely
+ for (int i=0; i < 2; i++){
+   //latch "kiinni"
+   digitalWrite(latchPin, LOW);
+   
+   //Bitit sisään, datapin kirjoittaa isoimman bitin ekana joka luetaan clockpinin sykkeellä
+   //Tässä tapauksessa animaatiot tulevat x arvosta riippuen, i pyörityksellä käydään läpi
+   shiftOut(dataPin,clockPin,MSBFIRST,datArray[i]);
+   
+   //latch "auki"
+   digitalWrite(latchPin, HIGH);
+ }
+}
+
+void lcdAnimaatio(){ //Vaatii hieromista riippuen arkkitehtuurista
+                     //atm tulostaa lipun arvosta riippuen jomman kumman konfiguraation ja vaihtaa lipun tilaa
+                     //Seuraavalla kutsukerralla tulostaa vastakkaisen konfiguraation koska lippu vaihtui ja muuttaa lippua taas jne jne
+  if (animaatioLippu == 0){
+    lcd.setCursor(0, 0);
+    lcd.print("<><><><><><><><>");
+    lcd.setCursor(0,1);
+    lcd.print("><><><><><><><><");
   
-  for (int x=0; x<8; x++){
-    switch (x) {
-      case 0:
-        datArray[0] = B11111111;
-        datArray[1] = B01111110;
-        datArray[2] = B10111101;
-        datArray[3] = B11011011;
-        datArray[4] = B11100111;
-        datArray[5] = B11011011;
-        datArray[6] = B10111101;
-        datArray[7] = B01111110;
-        break;
-
-      case 1:
-        datArray[0] = B00000001;
-        datArray[1] = B00000010;
-        datArray[2] = B00000100;
-        datArray[3] = B00001000;
-        datArray[4] = B00010000;
-        datArray[5] = B00100000;
-        datArray[6] = B01000000;
-        datArray[7] = B10000000;
-        break;
-
-      case 2:
-        datArray[0] = B10000001;
-        datArray[1] = B01000010;
-        datArray[2] = B00100100;
-        datArray[3] = B00011000;
-        datArray[4] = B00000000;
-        datArray[5] = B00100100;
-        datArray[6] = B01000010;
-        datArray[7] = B10000001;
-        break;
-
-      case 3:
-        datArray[0] = B10101010;
-        datArray[1] = B01010101;
-        datArray[2] = B10101010;
-        datArray[3] = B01010101;
-        datArray[4] = B10101010;
-        datArray[5] = B01010101;
-        datArray[6] = B10101010;
-        datArray[7] = B01010101;
-        break;
-
-      case 4:
-        datArray[0] = B10000000;
-        datArray[1] = B00000001;
-        datArray[2] = B01000000;
-        datArray[3] = B00000010;
-        datArray[4] = B00100000;
-        datArray[5] = B00000100;
-        datArray[6] = B00010000;
-        datArray[7] = B00001000;
-        break;
-
-      case 5:
-        datArray[0] = B11000000;
-        datArray[1] = B01100000;
-        datArray[2] = B00110000;
-        datArray[3] = B00011000;
-        datArray[4] = B00001100;
-        datArray[5] = B00000110;
-        datArray[6] = B00000011;
-        datArray[7] = B10000001;
-        break;
-
-      case 6:
-        datArray[0] = B11100000;
-        datArray[1] = B01110000;
-        datArray[2] = B00111000;
-        datArray[3] = B00011100;
-        datArray[4] = B00001110;
-        datArray[5] = B00000111;
-        datArray[6] = B10000011;
-        datArray[7] = B11000001;
-        break;
-
-      case 7:
-        datArray[0] = B10001000;
-        datArray[1] = B01000100;
-        datArray[2] = B00100010;
-        datArray[3] = B00010001;
-        datArray[4] = B10001000;
-        datArray[5] = B01000100;
-        datArray[6] = B00100010;
-        datArray[7] = B00010001;
-        break;
-
-      default:
-      break;
-    }
-
-    //Ledien väläyttely
-    for (int i=0; i < 8; i++){
-      //latch "kiinni"
-      digitalWrite(latchPin, LOW);
-
-      //Bitit sisään, datapin kirjoittaa isoimman bitin ekana joka luetaan clockpinin sykkeellä
-      //Tässä tapauksessa animaatiot tulevat x arvosta riippuen, i pyörityksellä käydään läpi
-      shiftOut(dataPin,clockPin,MSBFIRST,datArray[i]);
-      
-      //latch "auki"
-      digitalWrite(latchPin, HIGH);
-    }
-  }  
+    animaatioLippu = 1;
+  }
+  if (animaatioLippu != 0){
+    lcd.setCursor(0, 0);
+    lcd.print("><><><><><><><><");
+    lcd.setCursor(0,1);
+    lcd.print("<><><><><><><><>");
+   
+    animaatioLippu = 0;
+  }
+ 
 }
 
 
