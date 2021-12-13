@@ -11,7 +11,7 @@ const byte d4 = 4;
 const byte d5 = 5;
 const byte d6 = 6;
 const byte d7 = 7;
-const byte bl = 255;                    
+const byte bl = 255;      //TODO: tomi kommentoi              
 
 LiquidCrystal_4bit lcd(rs, en, d4, d5, d6, d7, bl, cols, rows);  // luodaan näytölle objekti
 
@@ -34,6 +34,8 @@ LiquidCrystal_4bit lcd(rs, en, d4, d5, d6, d7, bl, cols, rows);  // luodaan näy
 char *actors[] = {"Vastaukseni on ei", "Älä luota siihen", "Lähteeni sanoo ei", "Epäilen", "Lopputulema ei ole hyvä", "Parempi, etten kerro nyt", "En voi ennustaa nyt", "Kysy uudestaan myöhemmin", "Epäselvä kysymys, kysy uudelleen", "Keskity ja kysy uudelleen", "Lopputulema on hyvä", "Todennäköisesti", "Merkit viittaavat että kyllä", "Miten näen asian, kyllä", "Kyllä", "Voit luottaa siihen",
  "Epäilemättä", "Kyllä, ehdottomasti", "Se on juurikin näin", "Se on varma"};
  
+//TODO: opiskelijamode taulukko
+
 // nämä myös sisältyvät settingsMenu() toimintaan
 char nappiPaino = '0';
 
@@ -138,18 +140,18 @@ char cap [16];   // must be large enough to hold captures
     }  // capturen ja printtauksen loppu
 }  // match_callbackin loppu
 
-void tulostusFunk(int a = 0) {     //funktio tulostukselle
-    kursoriNolla = 0;
+void tulostusFunk(int a = 0) {      //funktio tulostukselle
+    kursoriNolla = 0;               //Nollataan rivinvaihto
     muuttuja16 = 0;                 //nollataan laskuri
     lcd.setCursor(0,0);
-    lcd.clear();                       //tyhjennetään näyttö
+    lcd.clear();                    //tyhjennetään näyttö
     MatchState ms (actors[a]);      //alustetaan RegExpille kohde
     regex = ms.GlobalMatch ("(%S+)( ?)", match_callback);
 }
 
 void ravistus(){
   unsigned long kulunutAika;      //Lasketaan kahden peräkkäisen mittaustuloksen kulmakerroin.
-  kulunutAika = millis() - aika;  
+  kulunutAika = millis() - aika;
   aika = millis();
 
   int sensorPrevious = sensorValue;
@@ -161,6 +163,7 @@ void ravistus(){
     ravistusLaskuri++;
     nollausLaskuri=0;
   }
+
   if(kulmakerroin == 0){          //Nostetaan nollauslaskuria kun kulma 0
     nollausLaskuri++;
   }
@@ -170,11 +173,12 @@ void ravistus(){
     ravistusLaskuri=0;
     nollausLaskuri=0;
   }
-  
+
   if (ravistusLaskuri >= 11) {    //Tietyn määrän jälkeen led päälle ja if 0 looppiin
-    ravistusLippu = true;        //vertailtavaa lukua muuttamalla herkkyyden säätö
+    ravistusLippu = true;         //vertailtavaa lukua muuttamalla herkkyyden säätö
     ravistusLaskuri = 0;          //Tähän tietenkin sisälle koodi joka signaloi
-  }
+    nollausLaskuri = 0;
+  }//TODO: testaa taulukointia mittaustuloksissa
  
   //HUOM! Funktiossa delay koska funktion toiminta prosessorin kellotaajuudella aivan liian herkkä. Ehkä tarvetta keksiä jokin muu ratkaisu?
   delay(50);
@@ -187,7 +191,7 @@ void moottoriBrrr() { //TODO: funktio jolla voi päristää moottoria tietyissä
 
 void melodia(int a = 0, int b = 1) { //Tässä a on melodia mitä halutaan soittaa ja b on toistojen määrä
   switch(a){   // 0 caseksi lyhyt iloinen piippaus, pitemmät melodiat valintojen taakse
-    case 0: 
+    case 0: //Timer1 käyttöön interrupteihin
       tone(9, 392, 100); //g
       delay(50);
       tone(9, 440, 100); //a
@@ -318,12 +322,13 @@ void buttonCheck() { // navigointia varten tehty funktio
   prevState_E = currRead_E;
 
   settingsMenu(nappiPaino);
-}
+} //TODO: settingsmenu kutsumaan buttoncheckiä arvona ja buttoncheck palauttamaan nappipaino arvo
+//TODO: looppiin rakenne settingsmenu ja nappipaino 
 
 void settingsMenu(char nappiPaino) { // asetusvalikon ohjelma
   switch(menuTaso) {    //käytetään switchcasea navigoinnissa
     case 0: // 
-      switch ( nappiPaino ) {
+      switch (nappiPaino) {
         case 'E': // Entteri
           menuTaso = 1;
           menu = 1;
@@ -341,7 +346,7 @@ void settingsMenu(char nappiPaino) { // asetusvalikon ohjelma
       }
       break;
     case 1: // Taso 1, päävalikko
-      switch ( nappiPaino ) {
+      switch (nappiPaino) {
         case 'E': // Enter
           paivitaSub();   // Sub = submenu
           menuTaso = 2;  // menee submenuun
@@ -368,7 +373,7 @@ void settingsMenu(char nappiPaino) { // asetusvalikon ohjelma
       } 
       break;
     case 2: // taso 2, submenu
-      switch ( nappiPaino ) {
+      switch (nappiPaino) {
         case 'E': 
           menuTaso = 1;
           paivitaMenu();
@@ -461,7 +466,7 @@ void paivitaMenu() {   // Avataan päävalikko josta avautuu eri valinnat
       lcd.print("             ");
       break;
     default:
-      Serial.println("paivitaMenu() default");
+      Serial.println("paivitaMenu() default"); //Default virheilmoitus
       break;
   }
 }
@@ -469,9 +474,9 @@ void paivitaMenu() {   // Avataan päävalikko josta avautuu eri valinnat
 void paivitaSub() {
   switch (menu) {
     case 1:  //Tässä pelitoiminto eli ravistus yms
-      toimintaFunk();
+      toimintaFunk(); //Perustoiminto pelille
       break;
-    case 2:
+    case 2: //TODO: tehdää tästä testaus valinta ja toiminta
       lcd.clear();
       lcd.print(" Vastaus:");
       lcd.setCursor(0, 1);

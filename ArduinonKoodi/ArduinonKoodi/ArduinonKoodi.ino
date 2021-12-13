@@ -77,8 +77,13 @@ const int latchPin = 10;
 const int clockPin = 11;
 const int dataPin = 12;
 
+<<<<<<< HEAD
 //Animaatiossa käytettävä taulukko 
 int datArray[8];  //Todnäk ei tarvitse olla globaali, mutta jostain syystä ei toiminut testatessa kuin globaalina
+=======
+//Animaatiossa käytettävä taulukko
+int datArray[2];  //Todnäk ei tarvitse olla globaali, mutta jostain syystä ei toiminut testatessa kuin globaalina
+>>>>>>> origin/main
 
 bool ravistusLippu = true;      //Lippu ravistusfunktion toiminnalle
 int sensorValue = 0;            //Muuttuja johon luku kiihtyvyysanturilta
@@ -86,6 +91,7 @@ unsigned long aika = millis();  //Muuttuja jossa aika millisekunteina
 int ravistusLaskuri = 0;        //Laskurit ravistuksentunnistusta varten
 int nollausLaskuri = 0;
 const int analogInPin = A4;     //Kiihtyvyysanturin sarjakytkennän sisääntulo
+int animaatioLippu = 0;         //lcd-animaation lippu, mahollistaa animoinnin esim loopin sykleissä
 
 
 
@@ -511,6 +517,7 @@ void naytaKotinaytto() { // Kotinäyttö näkymä
 }
 
 void lediAnimaatio() {
+<<<<<<< HEAD
   //perustuu https://dronebotworkshop.com/shift-registers/ löytyvään koodiin
   //kohdasta "74HC595 and 74HC165 Sketch 2 – Exciting!"
   for (int x=0; x<2; x++){
@@ -606,20 +613,48 @@ void lediAnimaatio() {
       default:
       break;
     }
+=======
+ //perustuu https://dronebotworkshop.com/shift-registers/ löytyvään koodiin
+ //kohdasta "74HC595 and 74HC165 Sketch 2 – Exciting!"
 
-    //Ledien väläyttely
-    for (int i=0; i < 8; i++){
-      //latch "kiinni"
-      digitalWrite(latchPin, LOW);
+ datArray[0] = B10101010;
+ datArray[1] = B01010101;
+        
+ //Ledien väläyttely
+ for (int i=0; i < 2; i++){
+   //latch "kiinni"
+   digitalWrite(latchPin, LOW);
+   
+   //Bitit sisään, datapin kirjoittaa isoimman bitin ekana joka luetaan clockpinin sykkeellä
+   //Tässä tapauksessa animaatiot tulevat x arvosta riippuen, i pyörityksellä käydään läpi
+   shiftOut(dataPin,clockPin,MSBFIRST,datArray[i]);
+   
+   //latch "auki"
+   digitalWrite(latchPin, HIGH);
+ }
+}
+>>>>>>> origin/main
 
-      //Bitit sisään, datapin kirjoittaa isoimman bitin ekana joka luetaan clockpinin sykkeellä
-      //Tässä tapauksessa animaatiot tulevat x arvosta riippuen, i pyörityksellä käydään läpi
-      shiftOut(dataPin,clockPin,MSBFIRST,datArray[i]);
-      
-      //latch "auki"
-      digitalWrite(latchPin, HIGH);
-    }
-  }  
+void lcdAnimaatio(){ //Vaatii hieromista riippuen arkkitehtuurista
+                     //atm tulostaa lipun arvosta riippuen jomman kumman konfiguraation ja vaihtaa lipun tilaa
+                     //Seuraavalla kutsukerralla tulostaa vastakkaisen konfiguraation koska lippu vaihtui ja muuttaa lippua taas jne jne
+  if (animaatioLippu == 0){
+    lcd.setCursor(0, 0);
+    lcd.print("<><><><><><><><>");
+    lcd.setCursor(0,1);
+    lcd.print("><><><><><><><><");
+  
+    animaatioLippu = 1;
+  }
+  if (animaatioLippu != 0){
+    lcd.setCursor(0, 0);
+    lcd.print("><><><><><><><><");
+    lcd.setCursor(0,1);
+    lcd.print("<><><><><><><><>");
+   
+    animaatioLippu = 0;
+  }
+ 
 }
 
 void paskaFunk(){
