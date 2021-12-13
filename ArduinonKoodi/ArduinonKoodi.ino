@@ -30,7 +30,7 @@ LiquidCrystal_4bit lcd(rs, en, d4, d5, d6, d7, bl, cols, rows);  // luodaan näy
 
 #define DEFAULT_DELAY 300
 
-//Seuraavaksi alustetaan lista vastauksista TODO: funktio tekemään muutoksia serialin kautta.
+//Seuraavaksi alustetaan lista vastauksista
 char *actors[] = {"Vastaukseni on ei", "Älä luota siihen", "Lähteeni sanoo ei", "Epäilen", "Lopputulema ei ole hyvä", "Parempi, etten kerro nyt", "En voi ennustaa nyt", "Kysy uudestaan myöhemmin", "Epäselvä kysymys, kysy uudelleen", "Keskity ja kysy uudelleen", "Lopputulema on hyvä", "Todennäköisesti", "Merkit viittaavat että kyllä", "Miten näen asian, kyllä", "Kyllä", "Voit luottaa siihen",
  "Epäilemättä", "Kyllä, ehdottomasti", "Se on juurikin näin", "Se on varma"};
  
@@ -43,7 +43,7 @@ byte menuTaso = 0;      // Taso 1 näyttää kotinäytön
 byte menu = 1;
 byte sub = 1;
 
-unsigned long hNumero_1 = 0;
+unsigned long hNumero_1 = 0; 
 unsigned long hNumero_2 = 0;
 unsigned long hNumero_3 = 0;
 
@@ -87,26 +87,28 @@ const int analogInPin = A4;     //Kiihtyvyysanturin sarjakytkennän sisääntulo
 
 unsigned long regex;            //RegExpin muuttuja
 float muuttuja16;               //RegExpin pituuden laskuri
-byte kursoriNolla = 1;
+byte kursoriNolla = 1;          //Tulostusfunktion looppia ja regExiä varten muuttuja ettei tulostu samalle riville kahdesti
 
 void setup() {
   lcd.begin(); // käynnistetään näyttö
   Serial.begin(9600);   
-  randomSeed(analogRead(A5));      //rng:n pohja
+  randomSeed(analogRead(A5));      //rng:n pohja luetaan arduinon tyhjältä analog pinniltä melua randomin seediksi
   pinMode(button_T, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
   pinMode(button_A, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
   pinMode(button_Y, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
   pinMode(button_E, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
 
-  pinMode(A4,INPUT);
+  pinMode(A4, INPUT);
  
-  pinMode(latchPin, OUTPUT); //Ledien  animaatioon käytettävät pinnit outputeiksi
+  pinMode(latchPin, OUTPUT);       //Ledien  animaatioon käytettävät pinnit outputeiksi
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
-  naytaKotinaytto();
+  melodia(0, 1); //avausmelodia, lyhyt duuri kolme nuottia
+  naytaKotinaytto();               //Ensimmäinen näyttö kuva missä
+  //TODO: Testifunktioita kaikille toimiville osille
 }
 
-int randomNumero() {   //funktio rng:lle
+int randomNumero() {   //funktio rng:lle, kutsutaan tulostusfunktiossa valitsemaan random vastaus
   long actor1 = 0;
   actor1 = random(sizeof(actors)/sizeof(char*)); //numero on välillä 0-[listan pituus]
   return actor1;
@@ -115,18 +117,15 @@ int randomNumero() {   //funktio rng:lle
 // kutsutaan jokaisa sanaa kohti tulostusfunktiossa
 void match_callback  (const char * match,          // matching string (not null-terminated)
                       const unsigned int length,   // length of matching string
-                      const MatchState & ms)      // MatchState in use (to get captures)
-{
+                      const MatchState & ms) {      // MatchState in use (to get captures)
+
 char cap [16];   // must be large enough to hold captures
 
     for (byte i = 0; i < ms.level; i++){
-   
-    ms.GetCapture (cap, i);                 //otetaan capturet jokaisesta halutusta merkistä.
- 
+    ms.GetCapture (cap, i);                   //otetaan capturet jokaisesta halutusta merkistä.
       if (muuttuja16 + length <= 16) {        //printataan ensimmäiselle riville
         muuttuja16 = muuttuja16 + length/2;   //laskuri rivinvaihtoa varten, koodi pyörähtää kerran jokaista regexin syntaksin vaihetta kohden, eli kolmesti meidän tapauksessa. Tämän takia vain kolmasosa matchin pituudesta lisätään laskuriin kierroksessa               
         lcd.print(cap);                       //tulostetaan näytölle
-
       }
       else if (muuttuja16 + length >= 16) {   //jos vastaus ei mahdu ensimmäiselle riville, katkaistaan se välilyönnissä
         if(kursoriNolla == 0){
@@ -136,9 +135,7 @@ char cap [16];   // must be large enough to hold captures
         muuttuja16 = muuttuja16 + length/2;
         lcd.print(cap);                       //tulostetaan näytölle
       }
-      
     }  // capturen ja printtauksen loppu
-
 }  // match_callbackin loppu
 
 void tulostusFunk(int a = 0) {     //funktio tulostukselle
@@ -151,14 +148,13 @@ void tulostusFunk(int a = 0) {     //funktio tulostukselle
 }
 
 void ravistus(){
-
   unsigned long kulunutAika;      //Lasketaan kahden peräkkäisen mittaustuloksen kulmakerroin.
   kulunutAika = millis() - aika;  
   aika = millis();
-  
+
   int sensorPrevious = sensorValue;
   sensorValue = analogRead(analogInPin);
-  
+
   int kulmakerroin = (sensorValue - sensorPrevious) / (int)kulunutAika;
 
   if (kulmakerroin != 0) {        //Nostetaan laskuria kun saatava kulmakerroin ei 0
@@ -182,17 +178,25 @@ void ravistus(){
  
   //HUOM! Funktiossa delay koska funktion toiminta prosessorin kellotaajuudella aivan liian herkkä. Ehkä tarvetta keksiä jokin muu ratkaisu?
   delay(50);
-  
 }
 
 void moottoriBrrr() { //TODO: funktio jolla voi päristää moottoria tietyissä tilanteissa
-  //Käytetään vaikka arduinon porttia 15
+  //PNP transistori eli low common = päällä
+  //TODO: korjaa funktio ja lisää tähän, kutsutaan
 }
 
 void melodia(int a = 0, int b = 1) { //Tässä a on melodia mitä halutaan soittaa ja b on toistojen määrä
-  switch(a){ // 0 caseksi lyhyt piippaus, pitemmät melodiat valintojen taakse
-    case 0: //2400 = tahti
-      for(int n = 0; n < b; n++) {    
+  switch(a){   // 0 caseksi lyhyt iloinen piippaus, pitemmät melodiat valintojen taakse
+    case 0: 
+      tone(9, 392, 100); //g
+      delay(50);
+      tone(9, 440, 100); //a
+      delay(50);
+      tone(9, 523, 400); //c
+    break;
+
+    case 1: //2400 = tahti
+    for(int n = 0; n < b; n++) {    
       tone(9, 293, 200); //d
       delay(400);
       tone(9, 440, 200); //a
@@ -226,7 +230,7 @@ void melodia(int a = 0, int b = 1) { //Tässä a on melodia mitä halutaan soitt
       tone(9, 329, 200); //e
       tone(9, 440, 200); //d
       delay(200);
-      tone(9, 440, 200); //c
+      tone(9, 440, 200); //a
       delay(200);
       //Tämä kommentti on tahtiviiva
       tone(9, 440, 200); //a
@@ -241,17 +245,14 @@ void melodia(int a = 0, int b = 1) { //Tässä a on melodia mitä halutaan soitt
       }
     break;
 
-    case 1: 
-    //melodia
-    break;
-
     case 2:
     //melodia
     break; 
 
-    default:  //virheen kuuloinen piippaus esim terssi alas g-d#
+    default: //virheen kuuloinen piippaus esim terssi alas g-d#
     tone(9, 196, 100); //g
     tone(9, 155, 200); //d#
+    Serial.println("melodia() default");  //Jos virhe niin serialiin viite virheestä
   }
 }
 
@@ -320,7 +321,6 @@ void buttonCheck() { // navigointia varten tehty funktio
 }
 
 void settingsMenu(char nappiPaino) { // asetusvalikon ohjelma
-
   switch(menuTaso) {    //käytetään switchcasea navigoinnissa
     case 0: // 
       switch ( nappiPaino ) {
@@ -430,12 +430,11 @@ void settingsMenu(char nappiPaino) { // asetusvalikon ohjelma
       } 
       break;
     case 3: // Taso 3, jos lisättäisiin sub menulle vielä toinen sub menu
-    
       break;
     default:
+      Serial.println("settinsMenu() default");
       break;
   }
-  
 }
 
 void paivitaMenu() {   // Avataan päävalikko josta avautuu eri valinnat
@@ -470,7 +469,7 @@ void paivitaMenu() {   // Avataan päävalikko josta avautuu eri valinnat
 void paivitaSub() {
   switch (menu) {
     case 1:  //Tässä pelitoiminto eli ravistus yms
-      paskaFunk();
+      toimintaFunk();
       break;
     case 2:
       lcd.clear();
@@ -500,8 +499,6 @@ void naytaKotinaytto() { // Kotinäyttö näkymä
 void lediAnimaatio(int n = 0) {
   //perustuu https://dronebotworkshop.com/shift-registers/ löytyvään koodiin
   //kohdasta "74HC595 and 74HC165 Sketch 2 – Exciting!"
-  
- // for (int x=0; x<8; x++){
     switch (n) {
       case 0:
         datArray[0] = B11111111;
@@ -608,28 +605,28 @@ void lediAnimaatio(int n = 0) {
       digitalWrite(latchPin, HIGH);
       delay(50);
     }
-  //}  
 }
 
-void paskaFunk(){
-  bool toisto = true;
-  byte kiertavaLuku = 0;
+void toimintaFunk(){
+  bool toisto = true; //while looppia varten
+  byte kiertavaLuku = 0; //ledien kiertämistä loopissa varten
   lcd.clear();
     while(toisto){
-      ravistus();
-      if(ravistusLippu == true) {
+      //TODO: jos onnistuu niin arvontamelodialle interrupteilla tähän ravistuslippu riippuvainen melodia
+      ravistus(); //kuunnellaan ravistus joka muuttaa ravistuslipun tilanteesta riippuen
+      if(ravistusLippu == true) { //jos on ravistettu niin että raja menee rikki niin ledit ja kaijutin seis, tulostetaan vastaus näytölle
         tulostusFunk(randomNumero());
         ravistusLippu = false;
         toisto = false;
-    }
-      lediAnimaatio(kiertavaLuku);
+    } //Ei pistetän lcd.clear tähän että vastaus on näkyvillä käyttäjän haluaman ajan
+      lediAnimaatio(kiertavaLuku); //jos laitetta ei ravistettu niin päivitetään ledejä ja niihin liittyviä muuttujia
       kiertavaLuku++;
-      if(kiertavaLuku >= 8) {
+      if(kiertavaLuku >= 8) { //ledi variaatioita vain 8 joten kierrätettävä luku on resetattava
         kiertavaLuku = 0;
     }
   }
 }
 
-void loop() {   //perustoiminto loop
-  buttonCheck(); //Aloittaa toimintopuun asetusmenulle
+void loop() {     //perustoiminto loop tässä suunnitelmassa vain buttoncheckin kutsu koska siitä alkaa menuralli
+  buttonCheck();  //Aloittaa toimintopuun asetusmenulle
 }
