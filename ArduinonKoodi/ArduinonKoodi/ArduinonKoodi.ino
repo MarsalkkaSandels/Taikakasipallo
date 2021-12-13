@@ -1,8 +1,19 @@
-#include <LiquidCrystal.h>  // Ladataan tarvittu kirjasto
+#include <NoiascaLiquidCrystal.h>       
+#include <NoiascaHW/lcd_4bit.h>        
+#include <Regexp.h>                    //ladataan LCD:lle ja RegExpille kirjastot
 
+// alustetaan lcd-näyttö
+const byte cols = 16;                  // merkkien määrä rivillä
+const byte rows = 2;                   // rivien määrä
+const byte rs = 2;
+const byte en = 3;
+const byte d4 = 4;
+const byte d5 = 5;
+const byte d6 = 6;
+const byte d7 = 7;
+const byte bl = 255;                    
 
-LiquidCrystal lcd = LiquidCrystal(2,3,4,5,6,7);   // Luodaan näytölle objekti.
-// Tästä alkaa settings menuun sisältyvät tiedot
+LiquidCrystal_4bit lcd(rs, en, d4, d5, d6, d7, bl, cols, rows);  // luodaan näytölle objekti
 #define button_T    A0
 #define button_A    A1
 #define button_Y    A2
@@ -17,7 +28,10 @@ LiquidCrystal lcd = LiquidCrystal(2,3,4,5,6,7);   // Luodaan näytölle objekti.
 
 #define DEFAULT_DELAY 300
 
-//Seuraavaksi alustetaan lista vastauksista TODO: funktio tekemään muutoksia serialin kautta.
+//tehdään RegEx:lle muuttuja
+float muuttuja16;
+
+//Seuraavaksi alustetaan lista vastauksista
 char *actors[] = {"Vastaukseni on ei", "Ala luota siihen", "Lähteeni sanoo ei", "Epäilen", "Lopputulema ei ole hyvä", "Parempi etten kerro nyt", "En voi ennustaa nyt", "Kysy uudestaan myöhemmin", "Epäselvä kysymys, kysy uudelleen", "Keskity ja kysy uudelleen", "Lopputulema on hyvä", "Todennäköisesti", "Merkit viittaavat että kyllä", "Miten näen asian, kyllä", "Kyllä", "Voit luottaa siihen",
  "Epäilemättä", "Kyllä, ehdottomasti", "Se on juurikin näin", "Se on varma"};
  
@@ -57,15 +71,21 @@ unsigned long waitTime_A = 50;
 unsigned long waitTime_Y = 50;
 unsigned long waitTime_E = 50;
 
-//Määritellään ledien animaatiossa käytettävät pinnit ja setupissa outputeiksi
+//Nimetään pinneille muttuja jotta pinnikaavioon on helpompi tehdä muutoksia. Kaikki paitsi lcd pinnit ja kaiutin pinni
+const int moottoriPin = 8;
 const int latchPin = 10;
 const int clockPin = 11;
 const int dataPin = 12;
 
+<<<<<<< HEAD
+//Animaatiossa käytettävä taulukko 
+int datArray[8];  //Todnäk ei tarvitse olla globaali, mutta jostain syystä ei toiminut testatessa kuin globaalina
+=======
 //Animaatiossa käytettävä taulukko
 int datArray[2];  //Todnäk ei tarvitse olla globaali, mutta jostain syystä ei toiminut testatessa kuin globaalina
+>>>>>>> origin/main
 
-bool ravistusLippu = TRUE;      //Lippu ravistusfunktion toiminnalle
+bool ravistusLippu = true;      //Lippu ravistusfunktion toiminnalle
 int sensorValue = 0;            //Muuttuja johon luku kiihtyvyysanturilta
 unsigned long aika = millis();  //Muuttuja jossa aika millisekunteina
 int ravistusLaskuri = 0;        //Laskurit ravistuksentunnistusta varten
@@ -73,30 +93,39 @@ int nollausLaskuri = 0;
 const int analogInPin = A4;     //Kiihtyvyysanturin sarjakytkennän sisääntulo
 int animaatioLippu = 0;         //lcd-animaation lippu, mahollistaa animoinnin esim loopin sykleissä
 
-void setup() {
-  lcd.begin(16, 2); // määritetään näytön koko
-  Serial.begin(9600);   //TODO: onko tälle tarvetta enään
-  randomSeed(600); //TODO: tähän analogi pinni jos vapaana
-  pinMode(button_T, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
-  pinMode(button_A, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
-  pinMode(button_Y, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
-  pinMode(button_E, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
-  pinMode(A4,INPUT);
-  pinMode(latchPin, OUTPUT); //Ledien  animaatioon käytettävät pinnit outputeiksi
-  pinMode(clockPin, OUTPUT);
-  pinMode(dataPin, OUTPUT);
 
-  //Testiajot funktiolle
-  melodia(10, 1); //pyritään tässä kutsumaan default
-  lediAnimaatio();
-  //TODO: näytölle testifunk
-}
 
 int randomNumero() {   //funktio rng:lle
   long actor1;
   actor1 = random(sizeof(actors)/sizeof(char*)); //numero on välillä 0-[listan pituus]
   return actor1;
 }
+
+//TODO: tämän käsittely loppuun
+void match_callback  (const char * match,          // matching string (not null-terminated)
+                      const unsigned int length,   // length of matching string
+                      const MatchState & ms)      // MatchState in use (to get captures)
+{
+char cap [16];   // must be large enough to hold captures
+  
+  Serial.print ("Matched: ");
+  Serial.write ((byte *) match, length);
+  Serial.println ();
+  
+  for (byte i = 0; i < ms.level; i++){
+    ms.GetCapture (cap, i);
+      if (muuttuja16 + length <= 16) {
+        muuttuja16 = muuttuja16 + length/3;
+        Serial.println(cap);
+     //   Serial.print("Rivi 1");
+      }
+      else if (muuttuja16 + length >= 16) {
+        muuttuja16 = muuttuja16 + length/3;
+        Serial.println(cap);
+      //  Serial.print("Rivi 2");
+      }
+    }  // end of for each capture
+}  // end of match_callbac
 
 void tulostusFunk(int a = 0) {     //funktio tulostukselle
     lcd.print(actors[a]); // printataan ensimmäiselle riville
@@ -105,12 +134,10 @@ void tulostusFunk(int a = 0) {     //funktio tulostukselle
 }
 
 void ravistus(){
-
   unsigned long kulunutAika;      //Lasketaan kahden peräkkäisen mittaustuloksen kulmakerroin.
-  kulunutAika = millis() - aika;  
+  kulunutAika = millis() - aika;
   aika = millis();
-  
-  int sensorPrevious = sensorValue;
+  int sensorPrevious = sensorValue; //Paljonko nämä arvot on arviolta, onko 3 x 63 - 1023?? vai?
   sensorValue = analogRead(analogInPin);
   
   int kulmakerroin = (sensorValue - sensorPrevious) / (int)kulunutAika;
@@ -118,25 +145,26 @@ void ravistus(){
   if (kulmakerroin != 0) {        //Nostetaan laskuria kun saatava kulmakerroin ei 0
     ravistusLaskuri++;
     nollausLaskuri=0;
+    
   }
   if(kulmakerroin == 0){          //Nostetaan nollauslaskuria kun kulma 0
     nollausLaskuri++;
   }
 
-  if(nollausLaskuri>=6){          //Tätä vertailua muuttamalla herkkyyden muutos
-    ravistusLippu = TRUE;         
-    ravistusLaskuri=0;
+  if(nollausLaskuri>=6){          //Tätä vertailua muuttamalla herkkyyden muutos, tässä arvo on loop(); syklejä?? TODO: selitä santerille
+    ravistusLippu = true;         //Tässä määritettään että ravistus on alkanut
+    ravistusLaskuri=0;            //miksi molemmat laskuri arvot alustettaan nollaksi saman ehdon siällä TODO: selitä santerille
     nollausLaskuri=0;
   }
   
-  if (ravistusLaskuri >= 11) {    //Tietyn määrän jälkeen led päälle ja if 0 looppiin
-    ravistusLippu = FALSE;        //vertailtavaa lukua muuttamalla herkkyyden säätö
+  if (ravistusLaskuri >= 11) {    //Vertaillun määrän jälkeen if 0 looppiin, eli suomeksi tässä ehtolausekkeessa on triggeri kun on heilutettu tarpeeksi
+    ravistusLippu = false;
     ravistusLaskuri = 0;          //Tähän tietenkin sisälle koodi joka signaloi
+    //tähän joko palautus jos tehdään globaali muuttuja toiminnan jatkumiselle ja tähän funktiokutsut muulle toiminnalle jos sisäistetty keskenään loopit
   }
  
   //HUOM! Funktiossa delay koska funktion toiminta prosessorin kellotaajuudella aivan liian herkkä. Ehkä tarvetta keksiä jokin muu ratkaisu?
   delay(50);
-  
 }
 
 void moottoriBrrr() { //TODO: funktio jolla voi päristää moottoria tietyissä tilanteissa
@@ -209,74 +237,7 @@ void melodia(int a = 0, int b = 1) { //Tässä a on melodia mitä halutaan soitt
   }
 }
 
-void buttonCheck() { // navigointia varten tehty funktio
-
-  // Tässä niin sanotusti "debouncataan" painonapit, jotta varmistutaan että
-  // että napin painallukset antavat luotettavia tuloksia
-  bool currRead_T = digitalRead(button_T);
-  bool currRead_A = digitalRead(button_A);
-  bool currRead_Y = digitalRead(button_Y);
-  bool currRead_E = digitalRead(button_E);
-
-  if (currRead_T != prevState_T) {
-    prevTime_T = millis();
-  }
-  if (currRead_A != prevState_A) {
-    prevTime_A = millis();
-  }
-  if (currRead_Y != prevState_Y) {
-    prevTime_Y = millis();
-  }
-  if (currRead_E != prevState_E) {
-    prevTime_E = millis();
-  }
-
-  if ((millis() - prevTime_T) > waitTime_T) {
-    if (currRead_T != currState_T) {
-      currState_T = currRead_T;
-      if (currState_T == LOW) {
-        nappiPaino = 'T';  // määrittää napin painamisen toiminnoksi 'takaisin'
-      } 
-    }
-  } else nappiPaino = '0';
-  if ((millis() - prevTime_A) > waitTime_A) {
-    if (currRead_A != currState_A) {
-      currState_A = currRead_A;
-      if (currState_A == LOW) {
-        nappiPaino = 'A'; // määrittää napin painamisen toiminnoksi 'alas'
-      } 
-    }
-  } else nappiPaino = '0';
-  if ((millis() - prevTime_Y) > waitTime_Y) {
-    if (currRead_Y != currState_Y) {
-      currState_Y = currRead_Y;
-      if (currState_Y == LOW) {
-        nappiPaino = 'Y'; // määrittää napin painamisen toiminnoksi 'ylös'
-      } else {
-        //nappiPaino = '0';
-      }
-    }
-  } else nappiPaino = '0';
-  if ((millis() - prevTime_E) > waitTime_E) {
-    if (currRead_E != currState_E) {
-      currState_E = currRead_E;
-      if (currState_E == LOW) {
-        nappiPaino = 'E'; // määrittää napin painamisen toiminnoksi 'entteri'
-      } 
-    }
-  } else nappiPaino = '0';
-
-  prevState_T = currRead_T;
-  prevState_A = currRead_A;
-  prevState_Y = currRead_Y;
-  prevState_E = currRead_E;
-
-  settinsgMenu(nappiPaino);
-
-}
-
 void settingsMenu(char nappiPaino) { // asetusvalikon ohjelma
-
   switch(menuTaso) {    //käytetään switchcasea navigoinnissa
     case 0: // 
       switch ( nappiPaino ) {
@@ -292,7 +253,7 @@ void settingsMenu(char nappiPaino) { // asetusvalikon ohjelma
           break;
         case 'T': // takaisin
           break;
-        default:
+        Serial.println("settingsMenu case0 default");
           break;
       }
       break;
@@ -320,6 +281,7 @@ void settingsMenu(char nappiPaino) { // asetusvalikon ohjelma
           delay(DEFAULT_DELAY);
           break;
         default:
+          Serial.println("settingsMenu case1 default");
           break;
       } 
       break;
@@ -381,59 +343,146 @@ void settingsMenu(char nappiPaino) { // asetusvalikon ohjelma
           paivitaMenu();
           delay(DEFAULT_DELAY);
           break;
-        default:  
+        default:
+          Serial.println("settingsMenu case2 default");  
           break;
       } 
       break;
-    case 3: // Taso 3, jos lisättäisiin sub menulle vielä toinen sub menu
-    
-      break;
     default:
+      Serial.println("settingsMenu case2 default");
       break;
   }
-  
 }
 
-void paivitaMenu() {   // Avataan päävalikko josta voidaan valita numero jota halutaan muokata
-  
+void buttonCheck() { // navigointia varten tehty funktio
+  // Tässä niin sanotusti "debouncataan" painonapit, jotta varmistutaan että
+  // että napin painallukset antavat luotettavia tuloksia
+  bool currRead_T = digitalRead(button_T);
+  bool currRead_A = digitalRead(button_A);
+  bool currRead_Y = digitalRead(button_Y);
+  bool currRead_E = digitalRead(button_E);
+
+  if (currRead_T != prevState_T) {
+    prevTime_T = millis();
+  }
+  if (currRead_A != prevState_A) {
+    prevTime_A = millis();
+  }
+  if (currRead_Y != prevState_Y) {
+    prevTime_Y = millis();
+  }
+  if (currRead_E != prevState_E) {
+    prevTime_E = millis();
+  }
+
+  if ((millis() - prevTime_T) > waitTime_T) {
+    if (currRead_T != currState_T) {
+      currState_T = currRead_T;
+      if (currState_T == LOW) {
+        nappiPaino = 'T';  // määrittää napin painamisen toiminnoksi 'takaisin'
+      } 
+    }
+  } else nappiPaino = '0';
+  if ((millis() - prevTime_A) > waitTime_A) {
+    if (currRead_A != currState_A) {
+      currState_A = currRead_A;
+      if (currState_A == LOW) {
+        nappiPaino = 'A'; // määrittää napin painamisen toiminnoksi 'alas'
+      } 
+    }
+  } else nappiPaino = '0';
+  if ((millis() - prevTime_Y) > waitTime_Y) {
+    if (currRead_Y != currState_Y) {
+      currState_Y = currRead_Y;
+      if (currState_Y == LOW) {
+        nappiPaino = 'Y'; // määrittää napin painamisen toiminnoksi 'ylös'
+      } else {
+        //nappiPaino = '0';
+      }
+    }
+  } else nappiPaino = '0';
+  if ((millis() - prevTime_E) > waitTime_E) {
+    if (currRead_E != currState_E) {
+      currState_E = currRead_E;
+      if (currState_E == LOW) {
+        nappiPaino = 'E'; // määrittää napin painamisen toiminnoksi 'entteri'
+      } 
+    }
+  } else nappiPaino = '0';
+
+  prevState_T = currRead_T;
+  prevState_A = currRead_A;
+  prevState_Y = currRead_Y;
+  prevState_E = currRead_E;
+
+  settingsMenu(nappiPaino);
+}
+
+
+
+void paivitaMenu() {   // Avataan päävalikko josta avautuu eri valinnat
   switch (menu) {
     case 0:
       menu = 1;
       break;
     case 1:
       lcd.clear();
-      lcd.print(">Hnumero 1 "); // ">" käytetään kursorina ohjaamaan haluttua submenua
+      lcd.print(">Aloita Peli "); // ">" käytetään kursorina ohjaamaan haluttua submenua
       lcd.print(hNumero_1);
       lcd.setCursor(0, 1);
-      lcd.print(" Hnumero 2 ");
+      lcd.print(" Syota Vastaus ");
       break;
     case 2:
       lcd.clear();
-      lcd.print(" Hnumero 1 ");
+      lcd.print(" Aloita Peli ");
       lcd.setCursor(0, 1);
-      lcd.print(">Hnumero 2 "); // ">" käytetään kursorina ohjaamaan haluttua submenua
+      lcd.print(">Syota Vastaus "); // ">" käytetään kursorina ohjaamaan haluttua submenua
       lcd.print(hNumero_2);
       break;
     case 3:
       lcd.clear();
-      lcd.print(">Hnumero 3 "); // ">" käytetään kursorina ohjaamaan haluttua submenua
+      lcd.print(">Opiskelija "); // ">" käytetään kursorina ohjaamaan haluttua submenua
       lcd.print(hNumero_3);
       lcd.setCursor(0, 1);
       lcd.print("             ");
       break;
-    case 4:
-      menu = 3;
+    default:
+      Serial.println("paivitaMenu() default");
       break;
   }
-  
 }
 
 void paivitaSub() {
   switch (menu) {
+    case 1:  //Tässä pelitoiminto eli ravistus yms
+      paskaFunk();
+      break;
+    case 2:
+      lcd.clear();
+      lcd.print(" Vastaus:");
+      lcd.setCursor(0, 1);
+      lcd.print(" Oma Vastaus = ");
+      lcd.print(hNumero_2);
+      break;
+    case 3:
+      lcd.clear();
+      lcd.print(" Alkoholi:");
+      lcd.setCursor(0, 1);
+      lcd.print(" = ");
+      lcd.print(hNumero_3);
+      break;
+    default:
+      Serial.println("päivitäSub() default");
+      break;
+  }
+}
+
+/*void paivitaSub() { //tämä on vanha osa
+  switch (menu) {
     case 0:
     // kun submenu on valittu avautuu kyseinen näkymä riipputen siitä mikä valittu
       break;
-    case 1:
+    case 1: // tähän kuuntelu ravistukselle
       lcd.clear();
       lcd.print(" Vastaus 1:");
       lcd.setCursor(0, 1);
@@ -458,7 +507,7 @@ void paivitaSub() {
       menu = 3;
       break;
   }
-}
+} */
 
 void naytaKotinaytto() { // Kotinäyttö näkymä
   lcd.clear();
@@ -468,6 +517,103 @@ void naytaKotinaytto() { // Kotinäyttö näkymä
 }
 
 void lediAnimaatio() {
+<<<<<<< HEAD
+  //perustuu https://dronebotworkshop.com/shift-registers/ löytyvään koodiin
+  //kohdasta "74HC595 and 74HC165 Sketch 2 – Exciting!"
+  for (int x=0; x<2; x++){
+    switch (x) {
+      case 0:
+        datArray[0] = B11111111;
+        datArray[1] = B01111110;
+        datArray[2] = B10111101;
+        datArray[3] = B11011011;
+        datArray[4] = B11100111;
+        datArray[5] = B11011011;
+        datArray[6] = B10111101;
+        datArray[7] = B01111110;
+        break;
+
+      case 1:
+        datArray[0] = B00000001;
+        datArray[1] = B00000010;
+        datArray[2] = B00000100;
+        datArray[3] = B00001000;
+        datArray[4] = B00010000;
+        datArray[5] = B00100000;
+        datArray[6] = B01000000;
+        datArray[7] = B10000000;
+        break;
+
+      case 2:
+        datArray[0] = B10000001;
+        datArray[1] = B01000010;
+        datArray[2] = B00100100;
+        datArray[3] = B00011000;
+        datArray[4] = B00000000;
+        datArray[5] = B00100100;
+        datArray[6] = B01000010;
+        datArray[7] = B10000001;
+        break;
+
+      case 3:
+        datArray[0] = B10101010;
+        datArray[1] = B01010101;
+        datArray[2] = B10101010;
+        datArray[3] = B01010101;
+        datArray[4] = B10101010;
+        datArray[5] = B01010101;
+        datArray[6] = B10101010;
+        datArray[7] = B01010101;
+        break;
+
+      case 4:
+        datArray[0] = B10000000;
+        datArray[1] = B00000001;
+        datArray[2] = B01000000;
+        datArray[3] = B00000010;
+        datArray[4] = B00100000;
+        datArray[5] = B00000100;
+        datArray[6] = B00010000;
+        datArray[7] = B00001000;
+        break;
+
+      case 5:
+        datArray[0] = B11000000;
+        datArray[1] = B01100000;
+        datArray[2] = B00110000;
+        datArray[3] = B00011000;
+        datArray[4] = B00001100;
+        datArray[5] = B00000110;
+        datArray[6] = B00000011;
+        datArray[7] = B10000001;
+        break;
+
+      case 6:
+        datArray[0] = B11100000;
+        datArray[1] = B01110000;
+        datArray[2] = B00111000;
+        datArray[3] = B00011100;
+        datArray[4] = B00001110;
+        datArray[5] = B00000111;
+        datArray[6] = B10000011;
+        datArray[7] = B11000001;
+        break;
+
+      case 7:
+        datArray[0] = B10001000;
+        datArray[1] = B01000100;
+        datArray[2] = B00100010;
+        datArray[3] = B00010001;
+        datArray[4] = B10001000;
+        datArray[5] = B01000100;
+        datArray[6] = B00100010;
+        datArray[7] = B00010001;
+        break;
+
+      default:
+      break;
+    }
+=======
  //perustuu https://dronebotworkshop.com/shift-registers/ löytyvään koodiin
  //kohdasta "74HC595 and 74HC165 Sketch 2 – Exciting!"
 
@@ -487,6 +633,7 @@ void lediAnimaatio() {
    digitalWrite(latchPin, HIGH);
  }
 }
+>>>>>>> origin/main
 
 void lcdAnimaatio(){ //Vaatii hieromista riippuen arkkitehtuurista
                      //atm tulostaa lipun arvosta riippuen jomman kumman konfiguraation ja vaihtaa lipun tilaa
@@ -510,10 +657,36 @@ void lcdAnimaatio(){ //Vaatii hieromista riippuen arkkitehtuurista
  
 }
 
+void paskaFunk(){
+  bool toisto = true;
+    while(toisto){
+    lediAnimaatio();
+    ravistus();
+    if(ravistusLippu == true) {
+      tulostusFunk(randomNumero());
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(960); //Tämä on täsä vain regexFunkin takija koska siellä tarvitaan toistaiseksi
+  lcd.begin(); // määritetään näytön koko
+  randomSeed(analogRead(A5)); //A5 Vapaa analog pinni antaa taustamelusta paremman randomin kuin pseudo random generattori 
+  pinMode(button_T, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
+  pinMode(button_A, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
+  pinMode(button_Y, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
+  pinMode(button_E, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
+  pinMode(A4,INPUT); //ravistimen input pinnin alustaminen
+  pinMode(latchPin, OUTPUT); //Ledien  animaatioon käytettävät pinnit outputeiksi
+  pinMode(clockPin, OUTPUT);
+  pinMode(dataPin, OUTPUT);
+
+  //Testiajot funktiolle
+  melodia(10, 1); //pyritään tässä kutsumaan default
+  lediAnimaatio();
+  //TODO: näytölle testifunk
+}
 
 void loop() {   //perustoiminto loop
-  //tästä otettu pois asetusmenun käyttö vielä toistaiseksi
-  tulostusFunk(randomNumero()); //kutsutaan satunnaisella numerolla tulostus funktio
-  melodia(0, 2); //Testimielessä rallattelut
-  delay(1000); //Tämä delay on turha kunhan saadaan sensoridatan kuuntelulle funktio
+  buttonCheck();
 }
