@@ -33,8 +33,6 @@ LiquidCrystal_4bit lcd(rs, en, d4, d5, d6, d7, bl, cols, rows);  // luodaan näy
 //Seuraavaksi alustetaan lista vastauksista
 char *actors[] = {"Vastaukseni on ei", "Älä luota siihen", "Lähteeni sanoo ei", "Epäilen", "Lopputulema ei ole hyvä", "Parempi, etten kerro nyt", "En voi ennustaa nyt", "Kysy uudestaan myöhemmin", "Epäselvä kysymys, kysy uudelleen", "Keskity ja kysy uudelleen", "Lopputulema on hyvä", "Todennäköisesti", "Merkit viittaavat että kyllä", "Miten näen asian, kyllä", "Kyllä", "Voit luottaa siihen",
  "Epäilemättä", "Kyllä, ehdottomasti", "Se on juurikin näin", "Se on varma"};
- 
-//TODO: opiskelijamode taulukko
 
 // nämä myös sisältyvät settingsMenu() toimintaan
 char nappiPaino = '0';
@@ -105,9 +103,8 @@ void setup() {
   pinMode(latchPin, OUTPUT);       //Ledien  animaatioon käytettävät pinnit outputeiksi
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
-  //melodia(0, 1); //avausmelodia, lyhyt duuri kolme nuottia
+  melodia(0, 1); //avausmelodia, lyhyt duuri kolme nuottia
   naytaKotinaytto();               //Ensimmäinen näyttö kuva missä
-  //TODO: Testifunktioita kaikille toimiville osille
 }
 
 int randomNumero() {   //funktio rng:lle, kutsutaan tulostusfunktiossa valitsemaan random vastaus
@@ -178,21 +175,7 @@ void ravistus(){
     ravistusLippu = true;         //vertailtavaa lukua muuttamalla herkkyyden säätö
     ravistusLaskuri = 0;          //Tähän tietenkin sisälle koodi joka signaloi
     nollausLaskuri = 0;
-  }//TODO: testaa taulukointia mittaustuloksissa
- 
-  Serial.print(kulmakerroin);     //testausta varten
-  Serial.print("  ");
-  Serial.print(ravistusLaskuri);
-  Serial.print("  ");
-  Serial.println(nollausLaskuri);
-
-  //HUOM! Funktiossa delay koska funktion toiminta prosessorin kellotaajuudella aivan liian herkkä. Ehkä tarvetta keksiä jokin muu ratkaisu?
-  //delay(50);
-}
-
-void moottoriBrrr() { //TODO: funktio jolla voi päristää moottoria tietyissä tilanteissa
-  //PNP transistori eli low common = päällä
-  //TODO: korjaa funktio ja lisää tähän, kutsutaan
+  }
 }
 
 void melodia(int a = 0, int b = 1) { //Tässä a on melodia mitä halutaan soittaa ja b on toistojen määrä
@@ -328,8 +311,7 @@ void buttonCheck() { // navigointia varten tehty funktio
   prevState_E = currRead_E;
 
   settingsMenu(nappiPaino);
-} //TODO: settingsmenu kutsumaan buttoncheckiä arvona ja buttoncheck palauttamaan nappipaino arvo
-//TODO: looppiin rakenne settingsmenu ja nappipaino 
+}
 
 void settingsMenu(char nappiPaino) { // asetusvalikon ohjelma
   switch(menuTaso) {    //käytetään switchcasea navigoinnissa
@@ -376,7 +358,7 @@ void settingsMenu(char nappiPaino) { // asetusvalikon ohjelma
           delay(DEFAULT_DELAY);
           break;
         default:
-          Serial.println("settingsMenu() case 1 default");
+          Serial.println("settingsMenu() case 1 default");  //Virhepaikannin
           break;
       } 
       break;
@@ -485,7 +467,7 @@ void paivitaSub() {
     case 1:  //Tässä pelitoiminto eli ravistus yms
       toimintaFunk(); //Perustoiminto pelille
       break;
-    case 2: //TODO: tehdää tästä testaus valinta ja toiminta
+    case 2:
       lcd.clear();
       lcd.print(" Vastaus:");
       lcd.setCursor(0, 1);
@@ -498,7 +480,7 @@ void paivitaSub() {
       lcd.print(" = ");
       break;
     default:
-      Serial.println("päivitäSub() default");
+      Serial.println("päivitäSub() default"); //Virheenpaikannus
       break;
   }
 }
@@ -617,7 +599,6 @@ void lediAnimaatio(int n = 0) {
       
       //latch "auki"
       digitalWrite(latchPin, HIGH);
-      //delay(50); TÄMÄN TAKIA EI TOIMINU
     }
 }
 
@@ -626,7 +607,6 @@ void toimintaFunk(){
   byte kiertavaLuku = 0; //ledien kiertämistä loopissa varten
   lcd.clear();
     while(toisto){
-      //TODO: jos onnistuu niin arvontamelodialle interrupteilla tähän ravistuslippu riippuvainen melodia
       ravistus(); //kuunnellaan ravistus joka muuttaa ravistuslipun tilanteesta riippuen
       if(ravistusLippu == true) { //jos on ravistettu niin että raja menee rikki niin ledit ja kaijutin seis, tulostetaan vastaus näytölle
         tulostusFunk(randomNumero());
