@@ -80,7 +80,7 @@ const int dataPin = 12;
 //Animaatiossa käytettävä taulukko
 int datArray[8];  //Todnäk ei tarvitse olla globaali, mutta jostain syystä ei toiminut testatessa kuin globaalina
 
-bool ravistusLippu = false;      //Lippu ravistusfunktion toiminnalle
+bool ravistusLippu = false;     //Lippu ravistusfunktion toiminnalle
 int sensorValue = 0;            //Muuttuja johon luku kiihtyvyysanturilta
 unsigned long aika = millis();  //Muuttuja jossa aika millisekunteina
 int ravistusLaskuri = 0;        //Laskurit ravistuksentunnistusta varten
@@ -105,7 +105,7 @@ void setup() {
   pinMode(latchPin, OUTPUT);       //Ledien  animaatioon käytettävät pinnit outputeiksi
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
-  melodia(0, 1); //avausmelodia, lyhyt duuri kolme nuottia
+  //melodia(0, 1); //avausmelodia, lyhyt duuri kolme nuottia
   naytaKotinaytto();               //Ensimmäinen näyttö kuva missä
   //TODO: Testifunktioita kaikille toimiville osille
 }
@@ -180,8 +180,14 @@ void ravistus(){
     nollausLaskuri = 0;
   }//TODO: testaa taulukointia mittaustuloksissa
  
+  Serial.print(kulmakerroin);     //testausta varten
+  Serial.print("  ");
+  Serial.print(ravistusLaskuri);
+  Serial.print("  ");
+  Serial.println(nollausLaskuri);
+
   //HUOM! Funktiossa delay koska funktion toiminta prosessorin kellotaajuudella aivan liian herkkä. Ehkä tarvetta keksiä jokin muu ratkaisu?
-  delay(50);
+  //delay(50);
 }
 
 void moottoriBrrr() { //TODO: funktio jolla voi päristää moottoria tietyissä tilanteissa
@@ -328,7 +334,7 @@ void buttonCheck() { // navigointia varten tehty funktio
 void settingsMenu(char nappiPaino) { // asetusvalikon ohjelma
   switch(menuTaso) {    //käytetään switchcasea navigoinnissa
     case 0: // 
-      switch (nappiPaino) {
+      switch(nappiPaino) {
         case 'E': // Entteri
           menuTaso = 1;
           menu = 1;
@@ -342,6 +348,7 @@ void settingsMenu(char nappiPaino) { // asetusvalikon ohjelma
         case 'T': // takaisin
           break;
         default:
+          Serial.println("settingsMenu(): case0 default");
           break;
       }
       break;
@@ -369,6 +376,7 @@ void settingsMenu(char nappiPaino) { // asetusvalikon ohjelma
           delay(DEFAULT_DELAY);
           break;
         default:
+          Serial.println("settingsMenu() case 1 default");
           break;
       } 
       break;
@@ -430,14 +438,15 @@ void settingsMenu(char nappiPaino) { // asetusvalikon ohjelma
           paivitaMenu();
           delay(DEFAULT_DELAY);
           break;
-        default:  
+        default:
+          Serial.println("settingsMenu() case2 default");
           break;
       } 
       break;
     case 3: // Taso 3, jos lisättäisiin sub menulle vielä toinen sub menu
       break;
     default:
-      Serial.println("settinsMenu() default");
+      Serial.println("settinsMenu() menutaso default");
       break;
   }
 }
@@ -608,7 +617,7 @@ void lediAnimaatio(int n = 0) {
       
       //latch "auki"
       digitalWrite(latchPin, HIGH);
-      delay(50);
+      //delay(50); TÄMÄN TAKIA EI TOIMINU
     }
 }
 
