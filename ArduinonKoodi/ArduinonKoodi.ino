@@ -11,7 +11,7 @@ const byte d4 = 4;
 const byte d5 = 5;
 const byte d6 = 6;
 const byte d7 = 7;
-const byte bl = 255;      //TODO: tomi kommentoi              
+const byte bl = 255;                   //kirjaston vaatima byte, joka on 255 jos käytössä oleva näyttö ei sitä hyödynnä.          
 
 LiquidCrystal_4bit lcd(rs, en, d4, d5, d6, d7, bl, cols, rows);  // luodaan näytölle objekti
 
