@@ -31,10 +31,13 @@ LiquidCrystal_4bit lcd(rs, en, d4, d5, d6, d7, bl, cols, rows);  // luodaan näy
 #define DEFAULT_DELAY 300
 
 //Seuraavaksi alustetaan lista vastauksista
-char *actors[] = {"Vastaukseni on ei", "Älä luota siihen", "Lähteeni sanoo ei", "Epäilen", "Lopputulema ei ole hyvä", "Parempi, etten kerro nyt", "En voi ennustaa nyt", "Kysy uudestaan myöhemmin", "Epäselvä kysymys, kysy uudelleen", "Keskity ja kysy uudelleen", "Lopputulema on hyvä", "Todennäköisesti", "Merkit viittaavat että kyllä", "Miten näen asian, kyllä", "Kyllä", "Voit luottaa siihen",
- "Epäilemättä", "Kyllä, ehdottomasti", "Se on juurikin näin", "Se on varma"};
- 
-//TODO: opiskelijamode taulukko
+char *actors[][20] = {
+  {"Vastaukseni on ei", "Älä luota siihen", "Lähteeni sanoo ei", "Epäilen", "Lopputulema ei ole hyvä", "Parempi, etten kerro nyt", "En voi ennustaa nyt", "Kysy uudestaan myöhemmin", "Epäselvä kysymys, kysy uudelleen", "Keskity ja kysy uudelleen", "Lopputulema on hyvä", "Todennäköisesti", "Merkit viittaavat että kyllä", "Miten näen asian, kyllä", "Kyllä", "Voit luottaa siihen", "Epäilemättä", 
+  "Kyllä, ehdottomasti", "Se on juurikin näin", "Se on varma"},
+  {"Kaliaa", "Siideriä", "Lonkeroa", "Jaloviinaa", "Gambiinaa", "Salmari", "Fisu", "Lökö", "Horna", "Tekilaa", "Gin", "Viski", "Rommi", "Mustikka Shot", "Hotsotti", "Apsintti", "Punkku", "Valkkari", "Kuohari", "Long Island Ice Tea"}
+};
+
+byte mode = 0;  //Tämän tarkoitusperä on salaisuus
 
 // nämä myös sisältyvät settingsMenu() toimintaan
 char nappiPaino = '0';
@@ -86,34 +89,15 @@ unsigned long aika = millis();  //Muuttuja jossa aika millisekunteina
 int ravistusLaskuri = 0;        //Laskurit ravistuksentunnistusta varten
 int nollausLaskuri = 0;
 const int analogInPin = A4;     //Kiihtyvyysanturin sarjakytkennän sisääntulo
-
+byte moodi = 0;
+int randomNumero = 4;
 unsigned long regex;            //RegExpin muuttuja
 float muuttuja16;               //RegExpin pituuden laskuri
 byte kursoriNolla = 1;          //Tulostusfunktion looppia ja regExiä varten muuttuja ettei tulostu samalle riville kahdesti
 
-void setup() {
-  lcd.begin(); // käynnistetään näyttö
-  Serial.begin(9600);   
-  randomSeed(analogRead(A5));      //rng:n pohja luetaan arduinon tyhjältä analog pinniltä melua randomin seediksi
-  pinMode(button_T, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
-  pinMode(button_A, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
-  pinMode(button_Y, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
-  pinMode(button_E, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
-
-  pinMode(A4, INPUT);
- 
-  pinMode(latchPin, OUTPUT);       //Ledien  animaatioon käytettävät pinnit outputeiksi
-  pinMode(clockPin, OUTPUT);
-  pinMode(dataPin, OUTPUT);
-  //melodia(0, 1); //avausmelodia, lyhyt duuri kolme nuottia
-  naytaKotinaytto();               //Ensimmäinen näyttö kuva missä
-  //TODO: Testifunktioita kaikille toimiville osille
-}
-
-int randomNumero() {   //funktio rng:lle, kutsutaan tulostusfunktiossa valitsemaan random vastaus
-  long actor1 = 0;
-  actor1 = random(sizeof(actors)/sizeof(char*)); //numero on välillä 0-[listan pituus]
-  return actor1;
+int randomFunk() {
+  randomNumero = random(sizeof(actors[moodi])/2);
+  return randomNumero;
 }
 
 // kutsutaan jokaisa sanaa kohti tulostusfunktiossa
@@ -145,7 +129,7 @@ void tulostusFunk(int a = 0) {      //funktio tulostukselle
     muuttuja16 = 0;                 //nollataan laskuri
     lcd.setCursor(0,0);
     lcd.clear();                    //tyhjennetään näyttö
-    MatchState ms (actors[a]);      //alustetaan RegExpille kohde
+    MatchState ms (actors[moodi][a]);      //alustetaan RegExpille kohde;
     regex = ms.GlobalMatch ("(%S+)( ?)", match_callback);
 }
 
@@ -178,21 +162,8 @@ void ravistus(){
     ravistusLippu = true;         //vertailtavaa lukua muuttamalla herkkyyden säätö
     ravistusLaskuri = 0;          //Tähän tietenkin sisälle koodi joka signaloi
     nollausLaskuri = 0;
-  }//TODO: testaa taulukointia mittaustuloksissa
- 
-  Serial.print(kulmakerroin);     //testausta varten
-  Serial.print("  ");
-  Serial.print(ravistusLaskuri);
-  Serial.print("  ");
-  Serial.println(nollausLaskuri);
-
-  //HUOM! Funktiossa delay koska funktion toiminta prosessorin kellotaajuudella aivan liian herkkä. Ehkä tarvetta keksiä jokin muu ratkaisu?
-  //delay(50);
-}
-
-void moottoriBrrr() { //TODO: funktio jolla voi päristää moottoria tietyissä tilanteissa
-  //PNP transistori eli low common = päällä
-  //TODO: korjaa funktio ja lisää tähän, kutsutaan
+  }
+  delay(50);
 }
 
 void melodia(int a = 0, int b = 1) { //Tässä a on melodia mitä halutaan soittaa ja b on toistojen määrä
@@ -328,8 +299,7 @@ void buttonCheck() { // navigointia varten tehty funktio
   prevState_E = currRead_E;
 
   settingsMenu(nappiPaino);
-} //TODO: settingsmenu kutsumaan buttoncheckiä arvona ja buttoncheck palauttamaan nappipaino arvo
-//TODO: looppiin rakenne settingsmenu ja nappipaino 
+}
 
 void settingsMenu(char nappiPaino) { // asetusvalikon ohjelma
   switch(menuTaso) {    //käytetään switchcasea navigoinnissa
@@ -355,7 +325,7 @@ void settingsMenu(char nappiPaino) { // asetusvalikon ohjelma
     case 1: // Taso 1, päävalikko
       switch (nappiPaino) {
         case 'E': // Enter
-          paivitaSub();   // Sub = submenu
+          //paivitaSub();   // Sub = submenu
           menuTaso = 2;  // menee submenuun
           paivitaSub();
           delay(DEFAULT_DELAY);
@@ -376,7 +346,7 @@ void settingsMenu(char nappiPaino) { // asetusvalikon ohjelma
           delay(DEFAULT_DELAY);
           break;
         default:
-          Serial.println("settingsMenu() case 1 default");
+          Serial.println("settingsMenu() case 1 default");  //Virhepaikannin
           break;
       } 
       break;
@@ -485,7 +455,7 @@ void paivitaSub() {
     case 1:  //Tässä pelitoiminto eli ravistus yms
       toimintaFunk(); //Perustoiminto pelille
       break;
-    case 2: //TODO: tehdää tästä testaus valinta ja toiminta
+    case 2:
       lcd.clear();
       lcd.print(" Vastaus:");
       lcd.setCursor(0, 1);
@@ -493,12 +463,18 @@ void paivitaSub() {
       break;
     case 3:
       lcd.clear();
-      lcd.print(" Alkoholi:");
+      lcd.print(" opiskelijamoodi:");
       lcd.setCursor(0, 1);
-      lcd.print(" = ");
+      lcd.print(moodi);
+      if(moodi == 0) { //muutetaan toimintamode hassuksi
+        moodi = 1;
+      } else if (moodi == 1) {
+        moodi = 0;
+      }
+      delay(20);
       break;
     default:
-      Serial.println("päivitäSub() default");
+      Serial.println("päivitäSub() default"); //Virheenpaikannus
       break;
   }
 }
@@ -617,7 +593,6 @@ void lediAnimaatio(int n = 0) {
       
       //latch "auki"
       digitalWrite(latchPin, HIGH);
-      //delay(50); TÄMÄN TAKIA EI TOIMINU
     }
 }
 
@@ -626,10 +601,10 @@ void toimintaFunk(){
   byte kiertavaLuku = 0; //ledien kiertämistä loopissa varten
   lcd.clear();
     while(toisto){
-      //TODO: jos onnistuu niin arvontamelodialle interrupteilla tähän ravistuslippu riippuvainen melodia
       ravistus(); //kuunnellaan ravistus joka muuttaa ravistuslipun tilanteesta riippuen
       if(ravistusLippu == true) { //jos on ravistettu niin että raja menee rikki niin ledit ja kaijutin seis, tulostetaan vastaus näytölle
-        tulostusFunk(randomNumero());
+        tulostusFunk(randomFunk());
+        melodia(0, 9);
         ravistusLippu = false;
         toisto = false;
     } //Ei pistetän lcd.clear tähän että vastaus on näkyvillä käyttäjän haluaman ajan
@@ -639,6 +614,23 @@ void toimintaFunk(){
         kiertavaLuku = 0;
     }
   }
+}
+
+void setup() {
+  lcd.begin(); // käynnistetään näyttö
+  Serial.begin(9600);   
+  randomSeed(analogRead(A5));      //rng:n pohja luetaan arduinon tyhjältä analog pinniltä melua randomin seediksi
+  pinMode(button_T, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
+  pinMode(button_A, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
+  pinMode(button_Y, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
+  pinMode(button_E, INPUT_PULLUP); //määritellään pinnien tehtävät pinMode(), kuuluvat settingsMenu()
+  pinMode(A4, INPUT);
+  pinMode(latchPin, OUTPUT);       //Ledien  animaatioon käytettävät pinnit outputeiksi
+  pinMode(clockPin, OUTPUT);
+  pinMode(dataPin, OUTPUT);
+  melodia(0, 1); //avausmelodia, lyhyt duuri kolme nuottia
+  naytaKotinaytto();               //Ensimmäinen näyttö kuva missä
+  lediAnimaatio(0);
 }
 
 void loop() {     //perustoiminto loop tässä suunnitelmassa vain buttoncheckin kutsu koska siitä alkaa menuralli
